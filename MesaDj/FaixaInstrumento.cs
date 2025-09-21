@@ -9,6 +9,7 @@ public class FaixaInstrumento
   private bool _executando = false;
   private bool _pausado = false;
   private readonly object _trava = new object();
+  private ManualResetEventSlim _pausaEvento = new ManualResetEventSlim(true);
 
   private AudioFileReader _audioFile;
   private WaveOutEvent _outputDevice;
@@ -41,6 +42,7 @@ public class FaixaInstrumento
       {
         _outputDevice?.Pause();
         _pausado = true;
+        _pausaEvento.Reset();
       }
     }
   }
@@ -53,6 +55,7 @@ public class FaixaInstrumento
       {
         _outputDevice?.Play();
         _pausado = false;
+        _pausaEvento.Set();
       }
     }
   }
@@ -92,21 +95,24 @@ public class FaixaInstrumento
     {
       while (_executando)
       {
-        _audioFile = new AudioFileReader(arquivo);
-        _outputDevice = new WaveOutEvent();
-        _outputDevice.Init(_audioFile);
-        _outputDevice.Play();
-
-        while (_outputDevice.PlaybackState == PlaybackState.Playing && _executando)
+        using (var audioFile = new AudioFileReader(arquivo))
+        using (var outputDevice = new WaveOutEvent())
         {
-          Thread.Sleep(100);
-          if (_pausado)
-            _outputDevice.Pause();
-        }
+          _audioFile = audioFile;
+          _outputDevice = outputDevice;
+          outputDevice.Init(audioFile);
+          outputDevice.Play();
 
-        _outputDevice.Stop();
-        _audioFile.Dispose();
-        _outputDevice.Dispose();
+          while (_executando && outputDevice.PlaybackState != PlaybackState.Stopped)
+          {
+            _pausaEvento.Wait();
+            Thread.Sleep(100);
+          }
+
+          outputDevice.Stop();
+        }
+        _audioFile = null;
+        _outputDevice = null;
       }
     }
     catch (Exception ex)

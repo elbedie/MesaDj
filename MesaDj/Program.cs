@@ -17,9 +17,9 @@ class Program
       faixa.Iniciar();
 
     int escolha = 0;
+    ImprimirUI();
     do
     {
-      ImprimirUI();
       Thread.Sleep(5000);
       Console.Clear();
 
