@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 
+
+
+
 class Program
 {
   static void Main(string[] args)
   {
-    var nomesInstrumentos = new List<string> { "bateria", "baixo", "sintetizador" };
+    var nomesInstrumentos = new List<string> { "bass", "drum", "electric-guitar", "piano" };
     var faixas = new Dictionary<string, FaixaInstrumento>();
     foreach (var nome in nomesInstrumentos)
       faixas[nome] = new FaixaInstrumento(nome.First().ToString().ToUpper() + nome.Substring(1));
@@ -16,12 +19,24 @@ class Program
     int escolha = 0;
     do
     {
-      Console.WriteLine("\n==== MESA DE DJ ====");
+      ImprimirUI();
+      Thread.Sleep(5000);
+      Console.Clear();
+
+      Console.ForegroundColor = ConsoleColor.Yellow;
+      Console.WriteLine(new string('*', 40));
+      Console.WriteLine("*            ROCK BAND          *");
+      Console.WriteLine(new string('*', 40));
+      Console.ResetColor();
       Console.WriteLine("1 - Pausar instrumento");
       Console.WriteLine("2 - Retomar instrumento");
       Console.WriteLine("3 - Ver status de instrumentos");
       Console.WriteLine("4 - Sair");
+
+      Console.ForegroundColor = ConsoleColor.Magenta;
       Console.Write("Escolha: ");
+      Console.ResetColor();
+
       if (!int.TryParse(Console.ReadLine(), out escolha))
         continue;
 
@@ -74,4 +89,26 @@ class Program
 
     Console.WriteLine("Todos os instrumentos foram encerrados. Até logo, DJ!");
   }
+
+  public static void ImprimirUI()
+  {
+          Console.WriteLine("                                ,---.      .--.");
+          Console.WriteLine("                               (  .  )    (  . )");
+          Console.WriteLine("                                `/--___  __`--`.");
+          Console.WriteLine("                            ,. _'| |___||___| _|`.");
+          Console.WriteLine("                           (-./_,|-,,'     `.' |\\ `");
+          Console.WriteLine("                          __`-`-'|//     `:. \\,|'");
+          Console.WriteLine("          --     -   --- |\\    | |||       ` | |");
+          Console.WriteLine("             --          | \\  _|_|\\\\   jrei  / |");
+          Console.WriteLine("      -            _     \\  \\  ,-'-.`._____,',-'-.");
+          Console.WriteLine("   ______________      `[]\\ .\\____________________");
+          Console.WriteLine("  |`.____________`.     || \\`| .::'        ._");
+          Console.WriteLine("  | |_''_o_o__o =.|     ||  \\|_________________");
+          Console.WriteLine("  | | ,--.   ,--. :   _ ||");
+          Console.WriteLine("  | |( () ) ( () )|:  \\`::')   ---        __");
+          Console.WriteLine("  `.|_`-_'___`-_'_|`. / :: \\");
+          Console.WriteLine("  -           _  -  : \\___:/    _   -    -");
+          Console.WriteLine("                    `--..___)");
+  }
 }
+
