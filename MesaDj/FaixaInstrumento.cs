@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using NAudio.Wave;
+
 public class FaixaInstrumento
 {
   private readonly string _nome;
@@ -8,10 +9,15 @@ public class FaixaInstrumento
   private bool _executando = false;
   private bool _pausado = false;
   private readonly object _trava = new object();
+
+  private AudioFileReader _audioFile;
+  private WaveOutEvent _outputDevice;
+
   public FaixaInstrumento(string nome)
   {
     _nome = nome;
   }
+
   public void Iniciar()
   {
     lock (_trava)
@@ -26,22 +32,31 @@ public class FaixaInstrumento
       }
     }
   }
+
   public void Pausar()
   {
     lock (_trava)
     {
-      if (_executando)
+      if (_executando && !_pausado)
+      {
+        _outputDevice?.Pause();
         _pausado = true;
+      }
     }
   }
+
   public void Retomar()
   {
     lock (_trava)
     {
       if (_executando && _pausado)
+      {
+        _outputDevice?.Play();
         _pausado = false;
+      }
     }
   }
+
   public void Parar()
   {
     lock (_trava)
@@ -49,59 +64,60 @@ public class FaixaInstrumento
       _executando = false;
       _pausado = false;
     }
+
+    _outputDevice?.Stop();
+    _audioFile?.Dispose();
+    _outputDevice?.Dispose();
+
     if (_thread != null && _thread.IsAlive)
       _thread.Join();
   }
+
   public string Estado
   {
     get
     {
       lock (_trava)
       {
-        if (!_executando)
-          return "Parado";
+        if (!_executando) return "Parado";
         return _pausado ? "Pausado" : "Tocando";
       }
     }
   }
+
   private void Executar()
   {
-    while (true)
-    {
-      lock (_trava)
-      {
-        if (!_executando)
-          break;
-        if (_pausado)
-        {
-          Monitor.Wait(_trava, 250);
-          continue;
-        }
-      }
-      TocarSomInstrumento();
-      Thread.Sleep(1000);
-    }
-    Console.WriteLine("[{_nome}] foi parado.");
-  }
-  private void TocarSomInstrumento()
-  {
-    string arquivo = _nome.ToLower() + ".wav";
+    string arquivo = System.IO.Path.Combine("Assets", _nome.ToLower() + ".wav");
     try
     {
-      using (var audioFile = new AudioFileReader(arquivo))
-      using (var outputDevice = new WaveOutEvent())
+      while (_executando)
       {
-        outputDevice.Init(audioFile);
-        outputDevice.Play();
-        // Espera apenas o tempo do arquivo ou 500ms, o que for menor
-        int duracao = (int)Math.Min(audioFile.TotalTime.TotalMilliseconds, 500);
-        Thread.Sleep(duracao); // não bloqueia toda a thread, só a batida
-        outputDevice.Stop();
+        _audioFile = new AudioFileReader(arquivo);
+        _outputDevice = new WaveOutEvent();
+        _outputDevice.Init(_audioFile);
+        _outputDevice.Play();
+
+        while (_outputDevice.PlaybackState == PlaybackState.Playing && _executando)
+        {
+          Thread.Sleep(100);
+          if (_pausado)
+            _outputDevice.Pause();
+        }
+
+        _outputDevice.Stop();
+        _audioFile.Dispose();
+        _outputDevice.Dispose();
       }
     }
     catch (Exception ex)
     {
-      Console.WriteLine("Erro ao tocar {arquivo}: {ex.Message}");
+      Console.WriteLine($"Erro ao tocar {arquivo}: {ex.Message}");
+    }
+    finally
+    {
+      _audioFile?.Dispose();
+      _outputDevice?.Dispose();
+      Console.WriteLine($"[{_nome}] foi parado.");
     }
   }
 }
