@@ -66,14 +66,15 @@ public class FaixaInstrumento
     {
       _executando = false;
       _pausado = false;
+      _pausaEvento.Set();
     }
-
     _outputDevice?.Stop();
     _audioFile?.Dispose();
     _outputDevice?.Dispose();
-
-    if (_thread != null && _thread.IsAlive)
+    if (_thread != null && _thread.IsAlive && Thread.CurrentThread != _thread)
+    {
       _thread.Join();
+    }
   }
 
   public string Estado

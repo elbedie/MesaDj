@@ -20,7 +20,7 @@ class Program
     ImprimirUI();
     do
     {
-      Thread.Sleep(5000);
+      Thread.Sleep(1000);
       Console.Clear();
 
       Console.ForegroundColor = ConsoleColor.Yellow;
